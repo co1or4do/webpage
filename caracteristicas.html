@@ -69,8 +69,12 @@
 
     .nav-logo {
       font-family: 'Lora', Georgia, serif;
-      font-size: 1.6rem; font-weight: 700; color: var(--green);
+      font-size: 1.6rem; font-weight: 400; color: var(--green);
       text-decoration: none; letter-spacing: .02em;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .nav-logo img {
+      height: 1.8rem; width: auto;
     }
 
     .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; }
@@ -370,7 +374,7 @@
 <!-- ══ NAV ══ -->
 <nav id="nav">
   <div class="nav-in">
-    <a href="index.html" class="nav-logo">DAG</a>
+    <a href="index.html" class="nav-logo"><img src="img/logo-dag.svg" alt="DAG logo">DAG</a>
     <ul class="nav-links">
       <li><a href="caracteristicas.html" class="active" data-es="Características" data-en="Features">Características</a></li>
       <li><a href="como-funciona.html" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a></li>
