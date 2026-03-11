@@ -32,6 +32,15 @@
       line-height: 1.7;
       overflow-x: hidden;
     }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: none;
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
 
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--cream); }
@@ -78,13 +87,21 @@
       height: 1.8rem; width: auto;
     }
 
-    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; }
+    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; margin-left: auto; margin-right: 24px; }
     .nav-links a {
       color: var(--muted); text-decoration: none; font-size: .86rem;
       font-weight: 500; padding: 6px 16px;
       transition: color .2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: 0; left: 16px; right: 16px;
+      height: 1px; background: var(--green);
+      transform: scaleX(0); transform-origin: right;
+      transition: transform .3s ease;
     }
     .nav-links a:hover { color: var(--green); }
+    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
 
     .nav-right { display: flex; align-items: center; gap: 14px; }
     .lang-toggle {
@@ -120,19 +137,23 @@
        HERO
     ════════════════════════════════════════════ */
     #hero {
-      min-height: 100vh; display: flex; align-items: center;
-      padding: 100px 0 0; /* nav space only at top */
+      display: flex; align-items: stretch;
+      padding: 0;
+      margin-top: 65px; /* nav height */
+      height: calc(100vh - 65px);
+      max-height: calc(100vh - 65px);
+      overflow: hidden;
     }
     .hero-grid {
       display: grid;
       grid-template-columns: 1fr 1.1fr;
-      min-height: calc(100vh - 100px);
       width: 100%;
+      height: 100%;
     }
     .hero-left {
       display: flex; flex-direction: column; justify-content: center;
-      padding: 80px 48px 80px 48px;
-      gap: 32px;
+      padding: 40px 48px;
+      gap: 24px;
     }
     .hero-title {
       font-family: 'Lora', Georgia, serif;
@@ -150,26 +171,60 @@
       background: var(--bordo); color: var(--cream);
       padding: 14px 32px; font-size: .92rem;
       font-family: 'Lora', Georgia, serif; font-weight: 600;
-      border: none; border-radius: 4px; text-decoration: none;
-      cursor: pointer; transition: background .2s;
+      border: none; border-radius: 0; text-decoration: none;
+      cursor: pointer; transition: background .2s, transform .2s;
       width: fit-content;
     }
-    .hero-cta:hover { background: #5a2433; }
+    .hero-cta:hover { background: #5a2433; transform: translateY(-1px); }
 
     /* Hero right: photo with marco overlay */
     .hero-right {
       position: relative; overflow: hidden;
-      height: calc(100vh - 100px);
     }
     .hero-photo {
       width: 100%; height: 100%; object-fit: cover;
+      object-position: center 25%;
       display: block;
+      transition: transform 8s ease-out;
     }
+    .hero-right:hover .hero-photo { transform: scale(1.03); }
+
+    /* ── MARCO (SVG detection frame) ── */
     .hero-marco {
       position: absolute;
-      top: 5%; left: 5%; width: 90%; height: 90%;
-      object-fit: contain;
+      top: 8%; left: 8%; width: 84%; height: 84%;
       pointer-events: none;
+      animation: marco-float 6s ease-in-out infinite;
+    }
+    @keyframes marco-float {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(3px, -6px); }
+      50% { transform: translate(-2px, -10px); }
+      75% { transform: translate(4px, -4px); }
+    }
+    .marco-border {
+      fill: none; stroke: rgba(27,58,42,.7); stroke-width: 2;
+    }
+    .marco-corner {
+      fill: none; stroke: var(--green); stroke-width: 3;
+      stroke-linecap: square;
+    }
+    .marco-tag {
+      fill: var(--green); opacity: .88;
+    }
+    .marco-tag-text {
+      font-family: 'Azeret Mono', monospace;
+      font-size: 11px; font-weight: 600; fill: var(--cream);
+      letter-spacing: .04em;
+    }
+    .marco-scanline {
+      stroke: rgba(27,58,42,.2); stroke-width: 1;
+      stroke-dasharray: 6 4;
+      animation: scanline-move 3s linear infinite;
+    }
+    @keyframes scanline-move {
+      0% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -20; }
     }
 
     /* ════════════════════════════════════════════
@@ -179,7 +234,13 @@
       padding: 56px 48px;
     }
     .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; }
-    .stat { text-align: center; }
+    .stat {
+      text-align: center;
+      padding: 20px 12px;
+      border-radius: 6px;
+      transition: background .3s ease, transform .3s ease;
+    }
+    .stat:hover { background: rgba(27,58,42,.03); transform: translateY(-2px); }
     .stat-val {
       font-family: 'Azeret Mono', monospace;
       font-size: 2.2rem; font-weight: 700; color: var(--green);
@@ -224,9 +285,12 @@
 
     .ps-item {
       display: flex; gap: 16px; align-items: center;
-      padding: 18px 0;
+      padding: 18px 12px;
       border-bottom: 1px solid var(--border);
+      border-radius: 4px;
+      transition: background .2s ease, padding-left .2s ease;
     }
+    .ps-item:hover { background: rgba(27,58,42,.02); padding-left: 18px; }
     .ps-item:first-of-type { border-top: 1px solid var(--border); }
     .ps-ico {
       width: 20px; height: 20px; flex-shrink: 0;
@@ -246,9 +310,12 @@
     .step {
       display: flex; flex-direction: column; align-items: center; text-align: center;
       gap: 16px; position: relative; z-index: 1;
-      padding: 0 24px;
+      padding: 24px;
       border-left: 1px solid var(--border);
+      border-radius: 6px;
+      transition: background .3s ease, transform .3s ease;
     }
+    .step:hover { background: rgba(27,58,42,.025); transform: translateY(-3px); }
     .step:first-child { border-left: none; }
     .step-n {
       font-family: 'Azeret Mono', monospace;
@@ -300,7 +367,9 @@
     .kpi {
       background: var(--white); border: 1px solid var(--border);
       border-radius: 6px; padding: 18px;
+      transition: border-color .2s ease, box-shadow .2s ease;
     }
+    .kpi:hover { border-color: var(--arena); box-shadow: 0 4px 16px rgba(27,58,42,.06); }
     .kpi-lbl {
       font-family: 'Azeret Mono', monospace;
       font-size: .65rem; color: var(--muted); text-transform: uppercase;
@@ -322,6 +391,8 @@
     ════════════════════════════════════════════ */
     #cta {
       padding: 120px 48px; text-align: center;
+      background: linear-gradient(180deg, var(--cream) 0%, rgba(27,58,42,.03) 50%, var(--cream) 100%);
+      position: relative;
     }
     .cta-in {
       max-width: 580px; margin: 0 auto;
@@ -342,8 +413,8 @@
     .foot-brand { display: flex; flex-direction: column; gap: 14px; }
     .foot-brand .foot-logo {
       font-family: 'Lora', Georgia, serif;
-      font-size: 1.4rem; font-weight: 700; color: var(--cream);
-      text-decoration: none;
+      font-size: 1.4rem; font-weight: 400; color: var(--cream);
+      text-decoration: none; letter-spacing: .08em;
     }
     .foot-brand p { color: rgba(253,251,247,.5); font-size: .84rem; line-height: 1.7; max-width: 280px; }
     .foot-badge {
@@ -380,9 +451,10 @@
       .nav-links { display: none; }
       .hamburger { display: flex; }
       .nav-in, .section, #stats, #cta, footer { padding-left: 24px; padding-right: 24px; }
-      .hero-grid { grid-template-columns: 1fr; }
-      .hero-left { padding: 60px 24px 40px; }
-      .hero-right { height: 60vw; min-height: 300px; }
+      #hero { height: auto; max-height: none; overflow: visible; }
+      .hero-grid { grid-template-columns: 1fr; height: auto; }
+      .hero-left { padding: 40px 24px 32px; }
+      .hero-right { min-height: 60vw; }
       .stats-grid { grid-template-columns: repeat(2,1fr); }
       .ps-grid { grid-template-columns: 1fr; }
       .steps { grid-template-columns: repeat(2,1fr); }
@@ -414,7 +486,7 @@
 <!-- ══ NAV ══ -->
 <nav id="nav">
   <div class="nav-in">
-    <a href="#hero" class="nav-logo"><img src="img/logo-dag-icon.svg" alt="DAG logo">DAG</a>
+    <a href="#hero" class="nav-logo"><img src="../FOTOS/LOGO.svg" alt="DAG logo">DAG</a>
     <ul class="nav-links">
       <li><a href="caracteristicas.html" data-es="Características" data-en="Features">Características</a></li>
       <li><a href="como-funciona.html" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a></li>
@@ -455,7 +527,32 @@
 
     <div class="hero-right">
       <img class="hero-photo" src="img/foto-vaca.jpg" alt="Vaca detectada por el sistema DAG" />
-      <img class="hero-marco" src="img/marco.png" alt="" />
+      <!-- Detection frame overlay (replaces low-res marco.png) -->
+      <svg class="hero-marco" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
+        <!-- Main border -->
+        <rect class="marco-border" x="4" y="4" width="392" height="312" rx="3"/>
+        <!-- Corner accents (top-left) -->
+        <path class="marco-corner" d="M4 34 L4 4 L44 4"/>
+        <!-- Corner accents (top-right) -->
+        <path class="marco-corner" d="M356 4 L396 4 L396 34"/>
+        <!-- Corner accents (bottom-left) -->
+        <path class="marco-corner" d="M4 286 L4 316 L44 316"/>
+        <!-- Corner accents (bottom-right) -->
+        <path class="marco-corner" d="M356 316 L396 316 L396 286"/>
+        <!-- Top-left tag: ID + weight -->
+        <rect class="marco-tag" x="4" y="4" width="130" height="24" rx="0"/>
+        <text class="marco-tag-text" x="12" y="19">ID:154    416kg</text>
+        <!-- Bottom-right tag: status -->
+        <rect class="marco-tag" x="270" y="292" width="126" height="24" rx="0"/>
+        <text class="marco-tag-text" x="278" y="307">ESTADO: EN PESO</text>
+        <!-- Subtle scanlines -->
+        <line class="marco-scanline" x1="4" y1="107" x2="396" y2="107"/>
+        <line class="marco-scanline" x1="4" y1="213" x2="396" y2="213"/>
+        <!-- Crosshair center -->
+        <line x1="190" y1="155" x2="210" y2="155" stroke="rgba(27,58,42,.25)" stroke-width="1"/>
+        <line x1="200" y1="145" x2="200" y2="165" stroke="rgba(27,58,42,.25)" stroke-width="1"/>
+        <circle cx="200" cy="155" r="12" fill="none" stroke="rgba(27,58,42,.15)" stroke-width="1" stroke-dasharray="4 3"/>
+      </svg>
     </div>
   </div>
 </section>
