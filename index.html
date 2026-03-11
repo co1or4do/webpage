@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAG — Detección Activa de Ganado</title>
+  <meta name="description" content="Sobrevolá tus lotes con un dron y obtené conteo, peso y condición corporal de cada animal. Sin arrear, sin manga, sin errores." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:  #FDFBF7;
+      --green:  #1B3A2A;
+      --bordo:  #6B2D3C;
+      --arena:  #B8976A;
+      --text:   #1B3A2A;
+      --muted:  #6a7d72;
+      --muted2: #9ba8a0;
+      --border: #d6d0c7;
+      --white:  #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; font-size: 17px; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .mono { font-family: 'Azeret Mono', 'Courier New', monospace; }
+
+    /* ── FADE-IN ── */
+    .fi { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+    .fi.v { opacity: 1; transform: none; }
+
+    /* ── DIVIDER LINE ── */
+    .divider {
+      width: 100%; height: 1px; background: var(--border);
+    }
+    .divider--short {
+      width: 100%; max-width: 360px; height: 1px; background: var(--border);
+    }
+
+    /* ════════════════════════════════════════════
+       NAV
+    ════════════════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 20px 0;
+      background: rgba(253,251,247,.92);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--green);
+      transition: padding .2s ease, border-color .3s ease;
+    }
+    nav.sc { padding: 14px 0; border-bottom-color: var(--green); }
+    .nav-in {
+      max-width: 100%; margin: 0; padding: 0 48px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.6rem; font-weight: 400; color: var(--green);
+      text-decoration: none; letter-spacing: .02em;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .nav-logo img {
+      height: 1.8rem; width: auto;
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: .86rem;
+      font-weight: 500; padding: 6px 16px;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--green); }
+
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .lang-toggle {
+      display: flex; border: 1.5px solid var(--border);
+      border-radius: 0; overflow: hidden;
+    }
+    .lang-btn {
+      padding: 5px 11px; border: none; background: transparent;
+      color: var(--muted2); font-size: .75rem; font-weight: 600;
+      cursor: pointer; font-family: 'Lora', Georgia, serif;
+      transition: all .2s;
+    }
+    .lang-btn.on { background: var(--green); color: var(--cream); }
+    .lang-btn:hover:not(.on) { color: var(--green); }
+
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer;
+      background: none; border: none; padding: 4px; }
+    .hamburger span { display: block; width: 22px; height: 1.5px; background: var(--green); }
+
+    .mob-menu {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(253,251,247,.98); flex-direction: column;
+      align-items: center; justify-content: center; gap: 32px;
+    }
+    .mob-menu.open { display: flex; }
+    .mob-menu a { color: var(--green); text-decoration: none; font-size: 1.3rem; font-weight: 600; }
+    .mob-menu .close-btn {
+      position: absolute; top: 24px; right: 24px;
+      background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer;
+    }
+
+    /* ════════════════════════════════════════════
+       HERO
+    ════════════════════════════════════════════ */
+    #hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 100px 0 0; /* nav space only at top */
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      min-height: calc(100vh - 100px);
+      width: 100%;
+    }
+    .hero-left {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 80px 48px 80px 48px;
+      gap: 32px;
+    }
+    .hero-title {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(2.8rem, 5.2vw, 4.2rem);
+      font-weight: 400; line-height: 1.08; letter-spacing: -.02em;
+      color: var(--green);
+    }
+    .hero-title .hl { color: var(--bordo); }
+    .hero-sub {
+      color: var(--muted); font-size: 1rem; line-height: 1.85;
+      max-width: 420px;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bordo); color: var(--cream);
+      padding: 14px 32px; font-size: .92rem;
+      font-family: 'Lora', Georgia, serif; font-weight: 600;
+      border: none; border-radius: 4px; text-decoration: none;
+      cursor: pointer; transition: background .2s;
+      width: fit-content;
+    }
+    .hero-cta:hover { background: #5a2433; }
+
+    /* Hero right: photo with marco overlay */
+    .hero-right {
+      position: relative; overflow: hidden;
+      height: calc(100vh - 100px);
+    }
+    .hero-photo {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
+    }
+    .hero-marco {
+      position: absolute;
+      top: 5%; left: 5%; width: 90%; height: 90%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════════════════════
+       STATS
+    ════════════════════════════════════════════ */
+    #stats {
+      padding: 56px 48px;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; }
+    .stat { text-align: center; }
+    .stat-val {
+      font-family: 'Azeret Mono', monospace;
+      font-size: 2.2rem; font-weight: 700; color: var(--green);
+      letter-spacing: -.03em; line-height: 1;
+    }
+    .stat-lbl { color: var(--muted); font-size: .82rem; margin-top: 8px; line-height: 1.5; }
+
+    /* ════════════════════════════════════════════
+       SECTIONS
+    ════════════════════════════════════════════ */
+    .section { padding: 96px 48px; }
+    .sec-head { display: flex; flex-direction: column; gap: 14px; margin-bottom: 56px; }
+    .sec-head.c { align-items: center; text-align: center; }
+    .sec-head.c .section-sub { margin: 0 auto; }
+
+    .sec-label {
+      font-family: 'Azeret Mono', monospace;
+      font-size: .68rem; font-weight: 600; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--arena);
+    }
+    .section-title {
+      font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+      font-weight: 700; line-height: 1.18;
+      color: var(--green);
+    }
+    .section-sub {
+      color: var(--muted); font-size: .95rem; line-height: 1.8; max-width: 520px;
+    }
+
+    /* ════════════════════════════════════════════
+       BEFORE / AFTER
+    ════════════════════════════════════════════ */
+    #problem { background: var(--white); }
+    .ps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+    .ps-col-title {
+      font-family: 'Azeret Mono', monospace;
+      font-size: .68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .12em; margin-bottom: 24px;
+    }
+    .ps-col-title.prob { color: var(--bordo); }
+    .ps-col-title.sol  { color: var(--green); }
+
+    .ps-item {
+      display: flex; gap: 16px; align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .ps-item:first-of-type { border-top: 1px solid var(--border); }
+    .ps-ico {
+      width: 20px; height: 20px; flex-shrink: 0;
+      color: var(--muted);
+    }
+    .ps-item.sol .ps-ico { color: var(--green); }
+    .ps-item.prob .ps-ico { color: var(--bordo); }
+    .ps-txt h4 { font-weight: 500; font-size: .9rem; }
+
+    /* ════════════════════════════════════════════
+       HOW IT WORKS
+    ════════════════════════════════════════════ */
+    .steps {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 0;
+      position: relative;
+    }
+    .step {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      gap: 16px; position: relative; z-index: 1;
+      padding: 0 24px;
+      border-left: 1px solid var(--border);
+    }
+    .step:first-child { border-left: none; }
+    .step-n {
+      font-family: 'Azeret Mono', monospace;
+      font-size: .72rem; font-weight: 600; color: var(--arena);
+      letter-spacing: .08em;
+    }
+    .step-ico {
+      width: 32px; height: 32px; color: var(--green);
+    }
+    .step-title { font-weight: 600; font-size: .95rem; }
+    .step-desc { color: var(--muted); font-size: .84rem; line-height: 1.6; }
+
+    /* ── MORE DETAIL LINKS ── */
+    .sec-detail { display: flex; justify-content: center; margin-top: 48px; }
+    .btn-detail {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--green); text-decoration: none; font-weight: 600; font-size: .86rem;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--green);
+      transition: all .2s;
+    }
+    .btn-detail:hover { color: var(--bordo); border-color: var(--bordo); }
+    .btn-detail svg { transition: transform .2s; width: 14px; height: 14px; }
+    .btn-detail:hover svg { transform: translateX(4px); }
+
+    /* ════════════════════════════════════════════
+       DASHBOARD PREVIEW
+    ════════════════════════════════════════════ */
+    #dashboard-sec { background: var(--white); }
+    .dash-wrap {
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(27,58,42,.06);
+    }
+    .dash-top {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px; display: flex; align-items: center; gap: 14px;
+    }
+    .dash-tab {
+      padding: 4px 12px; font-size: .72rem;
+      font-weight: 600; color: var(--muted);
+      font-family: 'Azeret Mono', monospace;
+    }
+    .dash-tab.on { color: var(--green); border-bottom: 1.5px solid var(--green); }
+    .dash-body {
+      padding: 24px; display: grid;
+      grid-template-columns: repeat(3,1fr) 2fr; gap: 14px;
+    }
+    .kpi {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 6px; padding: 18px;
+    }
+    .kpi-lbl {
+      font-family: 'Azeret Mono', monospace;
+      font-size: .65rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .08em; font-weight: 600;
+    }
+    .kpi-val {
+      font-family: 'Azeret Mono', monospace;
+      font-size: 1.7rem; font-weight: 700; color: var(--green); margin-top: 6px;
+    }
+    .kpi-delta {
+      font-size: .72rem; margin-top: 4px;
+      font-family: 'Azeret Mono', monospace;
+    }
+    .kpi-delta.up { color: var(--green); }
+    .kpi-delta.warn { color: var(--arena); }
+
+    /* ════════════════════════════════════════════
+       CTA
+    ════════════════════════════════════════════ */
+    #cta {
+      padding: 120px 48px; text-align: center;
+    }
+    .cta-in {
+      max-width: 580px; margin: 0 auto;
+      display: flex; flex-direction: column; align-items: center; gap: 24px;
+    }
+    .cta-title {
+      font-size: clamp(2rem, 3.8vw, 2.8rem); font-weight: 700;
+      letter-spacing: -.02em; line-height: 1.15; color: var(--green);
+    }
+    .cta-sub { color: var(--muted); font-size: .95rem; line-height: 1.8; }
+
+    /* ════════════════════════════════════════════
+       FOOTER
+    ════════════════════════════════════════════ */
+    footer { background: var(--green); color: rgba(253,251,247,.7); padding: 56px 48px 38px; }
+    .foot-inner { max-width: 100%; }
+    .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 44px; }
+    .foot-brand { display: flex; flex-direction: column; gap: 14px; }
+    .foot-brand .foot-logo {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.4rem; font-weight: 700; color: var(--cream);
+      text-decoration: none;
+    }
+    .foot-brand p { color: rgba(253,251,247,.5); font-size: .84rem; line-height: 1.7; max-width: 280px; }
+    .foot-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(253,251,247,.06); border: 1px solid rgba(253,251,247,.12);
+      color: var(--arena); border-radius: 4px; padding: 4px 10px;
+      font-size: .68rem; font-weight: 600;
+      font-family: 'Azeret Mono', monospace;
+    }
+    .foot-col h5 {
+      font-family: 'Azeret Mono', monospace;
+      font-size: .65rem; text-transform: uppercase; letter-spacing: .12em;
+      color: rgba(253,251,247,.3); font-weight: 600; margin-bottom: 16px;
+    }
+    .foot-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .foot-col a { color: rgba(253,251,247,.55); text-decoration: none; font-size: .84rem;
+      transition: color .2s; }
+    .foot-col a:hover { color: var(--cream); }
+    .foot-btm {
+      border-top: 1px solid rgba(253,251,247,.08); padding-top: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .foot-copy { color: rgba(253,251,247,.3); font-size: .76rem; }
+
+    /* ════════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════════ */
+    @media(max-width:1024px){
+      .foot-grid { grid-template-columns: 1fr 1fr; }
+      .dash-body { grid-template-columns: repeat(3,1fr); }
+    }
+    @media(max-width:768px){
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .nav-in, .section, #stats, #cta, footer { padding-left: 24px; padding-right: 24px; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-left { padding: 60px 24px 40px; }
+      .hero-right { height: 60vw; min-height: 300px; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .ps-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: repeat(2,1fr); }
+      .step { border-left: none; border-top: 1px solid var(--border); padding: 24px; }
+      .step:first-child, .step:nth-child(2) { border-top: none; }
+      .foot-grid { grid-template-columns: 1fr; }
+      .dash-body { grid-template-columns: 1fr 1fr; }
+      .section { padding: 72px 24px; }
+    }
+    @media(max-width:480px){
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .dash-body { grid-template-columns: 1fr; }
+      html { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ MOBILE MENU ══ -->
+<div class="mob-menu" id="mobMenu">
+  <button class="close-btn" onclick="closeMob()">&#10005;</button>
+  <a href="caracteristicas.html" onclick="closeMob()" data-es="Características" data-en="Features">Características</a>
+  <a href="como-funciona.html" onclick="closeMob()" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+  <a href="dashboard.html" onclick="closeMob()" data-es="Dashboard" data-en="Dashboard">Dashboard</a>
+  <a href="#cta" onclick="closeMob()" class="hero-cta"
+    data-es="Pedí una demo" data-en="Request a demo">Pedí una demo</a>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav id="nav">
+  <div class="nav-in">
+    <a href="#hero" class="nav-logo"><img src="img/logo-dag-icon.svg" alt="DAG logo">DAG</a>
+    <ul class="nav-links">
+      <li><a href="caracteristicas.html" data-es="Características" data-en="Features">Características</a></li>
+      <li><a href="como-funciona.html" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a></li>
+      <li><a href="dashboard.html" data-es="Dashboard" data-en="Dashboard">Dashboard</a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn on" id="btnES" onclick="setLang('es')">ES</button>
+        <button class="lang-btn"    id="btnEN" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="hamburger" onclick="openMob()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-grid">
+    <div class="hero-left fi">
+      <h1 class="hero-title">
+        <span data-es="Conocé tu rodeo" data-en="Know your herd">Conocé tu rodeo</span><br/>
+        <span class="hl" data-es="vuelo a vuelo" data-en="flight by flight">vuelo a vuelo</span>
+      </h1>
+
+      <div class="divider--short"></div>
+
+      <p class="hero-sub"
+        data-es="Sobrevolá tus lotes con el dron y obtené conteo exacto, peso estimado y condición corporal de cada animal. Sin arrear, sin manga, sin estrés para la hacienda."
+        data-en="Fly over your paddocks with a drone and get exact headcount, estimated weight, and body condition for every animal. No herding, no crush, no stress for the cattle.">
+        Sobrevolá tus lotes con el dron y obtené conteo exacto, peso estimado y condición corporal de cada animal. Sin arrear, sin manga, sin estrés para la hacienda.
+      </p>
+
+      <a href="#cta" class="hero-cta"
+        data-es="Pedí una demo" data-en="Request a demo">Pedí una demo</a>
+    </div>
+
+    <div class="hero-right">
+      <img class="hero-photo" src="img/foto-vaca.jpg" alt="Vaca detectada por el sistema DAG" />
+      <img class="hero-marco" src="img/marco.png" alt="" />
+    </div>
+  </div>
+</section>
+
+<!-- ══ LINE ══ -->
+<div class="divider"></div>
+
+<!-- ══ STATS ══ -->
+<section id="stats">
+  <div class="stats-grid fi">
+    <div class="stat">
+      <div class="stat-val">0</div>
+      <div class="stat-lbl" data-es="Contacto físico con la hacienda" data-en="Physical contact with livestock">Contacto físico con la hacienda</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">&gt;93 %</div>
+      <div class="stat-lbl" data-es="Precisión de conteo en condiciones reales" data-en="Counting accuracy in real-world conditions">Precisión de conteo en condiciones reales</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">360°</div>
+      <div class="stat-lbl" data-es="Cobertura del lote en un solo vuelo" data-en="Full paddock coverage in one flight">Cobertura del lote en un solo vuelo</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">4</div>
+      <div class="stat-lbl" data-es="Condiciones corporales detectadas" data-en="Body conditions detected automatically">Condiciones corporales detectadas</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LINE ══ -->
+<div class="divider"></div>
+
+<!-- ══ BEFORE / AFTER ══ -->
+<section id="problem" class="section">
+  <div class="sec-head c fi">
+    <span class="sec-label" data-es="Antes vs. con DAG" data-en="Before vs. with DAG">Antes vs. con DAG</span>
+    <h2 class="section-title" data-es="El campo siempre tuvo sus formas. Nosotros las mejoramos." data-en="Traditional methods work well. We make them better.">
+      El campo siempre tuvo sus formas.<br/>Nosotros las mejoramos.
+    </h2>
+  </div>
+  <div class="ps-grid fi">
+    <!-- Antes -->
+    <div>
+      <p class="ps-col-title prob" data-es="Antes" data-en="Before">Antes</p>
+      <div class="ps-item prob">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div class="ps-txt"><h4 data-es="Recorrer el campo para contar cabezas" data-en="Riding the field to count heads">Recorrer el campo para contar cabezas</h4></div>
+      </div>
+      <div class="ps-item prob">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M4 21h16"/></svg>
+        <div class="ps-txt"><h4 data-es="Manga + balanza = estrés y pérdida de peso" data-en="Crush + scale = stress and weight loss">Manga + balanza = estrés y pérdida de peso</h4></div>
+      </div>
+      <div class="ps-item prob">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div class="ps-txt"><h4 data-es="Registros en papel o Excel, sin tendencias" data-en="Paper or Excel records, no trends">Registros en papel o Excel, sin tendencias</h4></div>
+      </div>
+      <div class="ps-item prob">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="ps-txt"><h4 data-es="El animal flaco se detecta tarde" data-en="Underweight animals detected too late">El animal flaco se detecta tarde</h4></div>
+      </div>
+    </div>
+
+    <!-- Con DAG -->
+    <div>
+      <p class="ps-col-title sol" data-es="Con DAG" data-en="With DAG">Con DAG</p>
+      <div class="ps-item sol">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <div class="ps-txt"><h4 data-es="Conteo exacto en un vuelo de 10 minutos" data-en="Exact headcount in a 10-minute flight">Conteo exacto en un vuelo de 10 minutos</h4></div>
+      </div>
+      <div class="ps-item sol">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div class="ps-txt"><h4 data-es="Peso estimado desde el aire, sin tocar al animal" data-en="Weight estimated from the air, no contact">Peso estimado desde el aire, sin tocar al animal</h4></div>
+      </div>
+      <div class="ps-item sol">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div class="ps-txt"><h4 data-es="Dashboard con historial automático por vuelo" data-en="Dashboard with automatic history per flight">Dashboard con historial automático por vuelo</h4></div>
+      </div>
+      <div class="ps-item sol">
+        <svg class="ps-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="ps-txt"><h4 data-es="Alertas automáticas antes de que sea un problema" data-en="Automatic alerts before it becomes a problem">Alertas automáticas antes de que sea un problema</h4></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LINE ══ -->
+<div class="divider"></div>
+
+<!-- ══ HOW IT WORKS ══ -->
+<section id="how" class="section">
+  <div class="sec-head c fi">
+    <span class="sec-label" data-es="Cómo funciona" data-en="How it works">Cómo funciona</span>
+    <h2 class="section-title" data-es="De vuelo a resultados en 4 pasos" data-en="From flight to results in 4 steps">De vuelo a resultados en 4 pasos</h2>
+  </div>
+  <div class="steps fi">
+    <div class="step">
+      <span class="step-n">01</span>
+      <svg class="step-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <h3 class="step-title" data-es="Volá el lote" data-en="Fly the paddock">Volá el lote</h3>
+      <p class="step-desc" data-es="Cualquier dron que grabe video" data-en="Any drone that records video">Cualquier dron que grabe video</p>
+    </div>
+    <div class="step">
+      <span class="step-n">02</span>
+      <svg class="step-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      <h3 class="step-title" data-es="Subí el video" data-en="Upload the video">Subí el video</h3>
+      <p class="step-desc" data-es="Indicá altitud y lote" data-en="Enter altitude and paddock">Indicá altitud y lote</p>
+    </div>
+    <div class="step">
+      <span class="step-n">03</span>
+      <svg class="step-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 9l3 3-3 3"/><line x1="13" y1="15" x2="17" y2="15"/></svg>
+      <h3 class="step-title" data-es="La IA procesa" data-en="AI processes">La IA procesa</h3>
+      <p class="step-desc" data-es="Conteo, peso y condición corporal" data-en="Headcount, weight, and body condition">Conteo, peso y condición corporal</p>
+    </div>
+    <div class="step">
+      <span class="step-n">04</span>
+      <svg class="step-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+      <h3 class="step-title" data-es="Revisá resultados" data-en="Review results">Revisá resultados</h3>
+      <p class="step-desc" data-es="Dashboard, alertas y PDF" data-en="Dashboard, alerts, and PDF">Dashboard, alertas y PDF</p>
+    </div>
+  </div>
+  <div class="sec-detail fi">
+    <a href="como-funciona.html" class="btn-detail">
+      <span data-es="Ver el proceso completo" data-en="See the full process">Ver el proceso completo</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ══ LINE ══ -->
+<div class="divider"></div>
+
+<!-- ══ DASHBOARD PREVIEW ══ -->
+<section id="dashboard-sec" class="section">
+  <div class="sec-head c fi">
+    <span class="sec-label" data-es="Dashboard" data-en="Dashboard">Dashboard</span>
+    <h2 class="section-title" data-es="Tu rodeo en una pantalla" data-en="Your herd on one screen">Tu rodeo en una pantalla</h2>
+  </div>
+  <div class="dash-wrap fi">
+    <div class="dash-top">
+      <div class="dash-tab on" data-es="Inicio" data-en="Home">Inicio</div>
+      <div class="dash-tab" data-es="Vuelos" data-en="Flights">Vuelos</div>
+      <div class="dash-tab" data-es="Analytics" data-en="Analytics">Analytics</div>
+      <div class="dash-tab" data-es="Configuración" data-en="Settings">Configuración</div>
+    </div>
+    <div class="dash-body">
+      <div class="kpi">
+        <div class="kpi-lbl" data-es="Vuelos este mes" data-en="Flights this month">Vuelos este mes</div>
+        <div class="kpi-val">12</div>
+        <div class="kpi-delta up">+ 3</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl" data-es="Peso promedio" data-en="Average weight">Peso promedio</div>
+        <div class="kpi-val">395 kg</div>
+        <div class="kpi-delta up">+ 11 kg</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl" data-es="Alertas activas" data-en="Active alerts">Alertas activas</div>
+        <div class="kpi-val" style="color:var(--arena)">2</div>
+        <div class="kpi-delta warn" data-es="Revisar lote Norte" data-en="Review North paddock">Revisar lote Norte</div>
+      </div>
+      <!-- Chart -->
+      <div class="kpi">
+        <div class="kpi-lbl" style="margin-bottom:12px;" data-es="Evolución de peso" data-en="Weight evolution">Evolución de peso</div>
+        <svg viewBox="0 0 380 118" style="width:100%;display:block;">
+          <defs>
+            <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--green)" stop-opacity="0.1"/>
+              <stop offset="100%" stop-color="var(--green)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="40" y1="10" x2="40" y2="100" stroke="var(--border)" stroke-width="1"/>
+          <line x1="40" y1="100" x2="370" y2="100" stroke="var(--border)" stroke-width="1"/>
+          <line x1="40" y1="70" x2="370" y2="70" stroke="var(--border)" stroke-width=".5" stroke-dasharray="3,3"/>
+          <line x1="40" y1="40" x2="370" y2="40" stroke="var(--border)" stroke-width=".5" stroke-dasharray="3,3"/>
+          <text x="0" y="103" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace">350</text>
+          <text x="0" y="73" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace">375</text>
+          <text x="0" y="43" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace">400</text>
+          <text x="70" y="112" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace" text-anchor="middle">May</text>
+          <text x="118" y="112" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace" text-anchor="middle">Jun</text>
+          <text x="166" y="112" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace" text-anchor="middle">Jul</text>
+          <text x="214" y="112" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace" text-anchor="middle">Ago</text>
+          <text x="262" y="112" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace" text-anchor="middle">Sep</text>
+          <text x="310" y="112" fill="var(--muted)" font-size="8" font-family="'Azeret Mono',monospace" text-anchor="middle">Oct</text>
+          <path d="M70,82 L118,75 L166,68 L214,61 L262,50 L310,38 L310,100 L70,100 Z" fill="url(#cg)"/>
+          <polyline points="70,82 118,75 166,68 214,61 262,50 310,38" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="310" cy="38" r="4" fill="var(--green)" stroke="var(--white)" stroke-width="2"/>
+          <rect x="288" y="20" width="64" height="18" fill="var(--cream)" rx="4"/>
+          <text x="293" y="30" fill="var(--green)" font-size="8" font-family="'Azeret Mono',monospace" font-weight="bold">395 kg</text>
+        </svg>
+      </div>
+
+      <!-- Condición corporal -->
+      <div class="kpi">
+        <div class="kpi-lbl" style="margin-bottom:14px;" data-es="Condición corporal" data-en="Body condition">Condición corporal</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.78rem;color:var(--muted);" data-es="Normal" data-en="Normal">Normal</span>
+            <span class="mono" style="font-size:.75rem;font-weight:700;color:var(--green)">78 %</span>
+          </div>
+          <div style="background:var(--border);border-radius:3px;height:4px;overflow:hidden;">
+            <div style="width:78%;height:100%;background:var(--green);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.78rem;color:var(--muted);" data-es="Terneros" data-en="Calves">Terneros</span>
+            <span class="mono" style="font-size:.75rem;font-weight:700;">14 %</span>
+          </div>
+          <div style="background:var(--border);border-radius:3px;height:4px;overflow:hidden;">
+            <div style="width:14%;height:100%;background:var(--arena);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.78rem;color:var(--muted);" data-es="Bajo peso" data-en="Underweight">Bajo peso</span>
+            <span class="mono" style="font-size:.75rem;font-weight:700;color:var(--bordo)">5 %</span>
+          </div>
+          <div style="background:var(--border);border-radius:3px;height:4px;overflow:hidden;">
+            <div style="width:5%;height:100%;background:var(--bordo);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.78rem;color:var(--muted);" data-es="Sobrepeso" data-en="Overweight">Sobrepeso</span>
+            <span class="mono" style="font-size:.75rem;font-weight:700;color:var(--arena)">3 %</span>
+          </div>
+          <div style="background:var(--border);border-radius:3px;height:4px;overflow:hidden;">
+            <div style="width:3%;height:100%;background:var(--arena);border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimos vuelos -->
+      <div class="kpi" style="grid-column:span 2;">
+        <div class="kpi-lbl" style="margin-bottom:12px;" data-es="Últimos vuelos" data-en="Recent flights">Últimos vuelos</div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:.82rem;">Lote Norte — <span class="mono" style="font-size:.74rem;">2024-10-15</span></span>
+            <span class="mono" style="color:var(--green);font-size:.68rem;font-weight:600;" data-es="Procesado" data-en="Processed">Procesado</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:.82rem;">Lote Sur — <span class="mono" style="font-size:.74rem;">2024-10-10</span></span>
+            <span class="mono" style="color:var(--green);font-size:.68rem;font-weight:600;" data-es="Procesado" data-en="Processed">Procesado</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+            <span style="font-size:.82rem;">Lote Este — <span class="mono" style="font-size:.74rem;">2024-10-05</span></span>
+            <span class="mono" style="color:var(--arena);font-size:.68rem;font-weight:600;" data-es="Procesando..." data-en="Processing...">Procesando...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec-detail fi">
+    <a href="dashboard.html" class="btn-detail">
+      <span data-es="Explorar el dashboard" data-en="Explore the dashboard">Explorar el dashboard</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ══ LINE ══ -->
+<div class="divider"></div>
+
+<!-- ══ CTA ══ -->
+<section id="cta">
+  <div class="cta-in fi">
+    <span class="sec-label" data-es="Contacto" data-en="Contact">Contacto</span>
+    <h2 class="cta-title">
+      <span data-es="¿Querés verlo" data-en="Want to see it">¿Querés verlo</span><br/>
+      <span class="hl" data-es="con tu rodeo?" data-en="with your herd?">con tu rodeo?</span>
+    </h2>
+    <p class="cta-sub" data-es="Escribinos y te mostramos cómo funciona en tu establecimiento." data-en="Reach out and we'll show you how it works on your property.">
+      Escribinos y te mostramos cómo funciona en tu establecimiento.
+    </p>
+    <a href="mailto:dag@fi.uba.ar" class="hero-cta" style="font-size:.95rem;padding:16px 36px;"
+      data-es="Pedí una demo" data-en="Request a demo">Pedí una demo</a>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="index.html" class="foot-logo">DAG</a>
+        <p data-es="Detección Activa de Ganado. Plataforma argentina de gestión ganadera con drones e Inteligencia Artificial."
+           data-en="Active Cattle Detection. Argentine livestock management platform using drones and Artificial Intelligence.">
+          Detección Activa de Ganado. Plataforma argentina de gestión ganadera con drones e Inteligencia Artificial.
+        </p>
+        <span class="foot-badge"><span data-es="Proyecto Final FIUBA 2024" data-en="FIUBA Final Project 2024">Proyecto Final FIUBA 2024</span></span>
+      </div>
+      <div class="foot-col">
+        <h5 data-es="Producto" data-en="Product">Producto</h5>
+        <ul>
+          <li><a href="caracteristicas.html" data-es="Características" data-en="Features">Características</a></li>
+          <li><a href="como-funciona.html" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a></li>
+          <li><a href="dashboard.html" data-es="Dashboard" data-en="Dashboard">Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5 data-es="Proyecto" data-en="Project">Proyecto</h5>
+        <ul>
+          <li><a href="https://fi.uba.ar" target="_blank">FIUBA</a></li>
+          <li><a href="mailto:dag@fi.uba.ar" data-es="Contacto" data-en="Contact">Contacto</a></li>
+          <li><a href="https://github.com/fiuba-dag" target="_blank">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-btm">
+      <span class="foot-copy">© 2024 DAG — <span data-es="Detección Activa de Ganado" data-en="Active Cattle Detection">Detección Activa de Ganado</span></span>
+      <span class="foot-badge"><span data-es="Hecho en Argentina" data-en="Made in Argentina">Hecho en Argentina</span></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══ JS ══ -->
+<script>
+  let lang = 'es';
+  function setLang(l) {
+    lang = l;
+    document.getElementById('btnES').classList.toggle('on', l === 'es');
+    document.getElementById('btnEN').classList.toggle('on', l === 'en');
+    document.documentElement.lang = l;
+    document.querySelectorAll('[data-es]').forEach(el => {
+      const t = el.getAttribute('data-' + l);
+      if (t) el.textContent = t;
+    });
+    document.title = l === 'es'
+      ? 'DAG — Detección Activa de Ganado'
+      : 'DAG — Active Cattle Detection';
+  }
+
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36));
+
+  function openMob()  { document.getElementById('mobMenu').classList.add('open'); }
+  function closeMob() { document.getElementById('mobMenu').classList.remove('open'); }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('v'), i * 70);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fi').forEach(el => io.observe(el));
+
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      if (id === '#') return;
+      const el = document.querySelector(id);
+      if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>
