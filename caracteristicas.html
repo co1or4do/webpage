@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Características — DAG Detección Activa de Ganado</title>
   <meta name="description" content="Conocé en detalle las seis funcionalidades de DAG: conteo automático, peso estimado sin manga, condición corporal, dashboard, informes PDF y alertas configurables." />
+  <link rel="icon" type="image/svg+xml" href="img/LOGO.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,6 +33,15 @@
       line-height: 1.7;
       overflow-x: hidden;
     }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: none;
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
 
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--cream); }
@@ -45,8 +55,9 @@
 
     /* ── DIVIDER LINE ── */
     .divider { width: 100%; height: 1px; background: var(--border); }
+    .divider--short { width: 100%; max-width: 360px; height: 1px; background: var(--border); }
 
-    .container { max-width: 1160px; margin: 0 auto; padding: 0 48px; }
+    .container { padding: 0 48px; }
 
     .hl { color: var(--bordo); }
 
@@ -77,14 +88,23 @@
       height: 1.8rem; width: auto;
     }
 
-    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; }
+    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; margin-left: auto; margin-right: 24px; }
     .nav-links a {
       color: var(--muted); text-decoration: none; font-size: .86rem;
       font-weight: 500; padding: 6px 16px;
       transition: color .2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: 0; left: 16px; right: 16px;
+      height: 1px; background: var(--green);
+      transform: scaleX(0); transform-origin: right;
+      transition: transform .3s ease;
     }
     .nav-links a:hover { color: var(--green); }
+    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
     .nav-links a.active { color: var(--green); }
+    .nav-links a.active::after { transform: scaleX(1); }
 
     .nav-right { display: flex; align-items: center; gap: 14px; }
     .lang-toggle {
@@ -137,7 +157,7 @@
     .page-hero-title {
       font-family: 'Lora', Georgia, serif;
       font-size: clamp(2.2rem, 4.5vw, 3.4rem);
-      font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
+      font-weight: 400; line-height: 1.1; letter-spacing: -.02em;
       color: var(--green);
     }
     .page-hero-sub { color: var(--muted); font-size: 1rem; line-height: 1.8; max-width: 580px; }
@@ -147,11 +167,11 @@
       background: var(--bordo); color: var(--cream);
       padding: 14px 32px; font-size: .92rem;
       font-family: 'Lora', Georgia, serif; font-weight: 600;
-      border: none; border-radius: 4px; text-decoration: none;
-      cursor: pointer; transition: background .2s;
+      border: none; border-radius: 0; text-decoration: none;
+      cursor: pointer; transition: background .2s, transform .2s;
       width: fit-content;
     }
-    .hero-cta:hover { background: #5a2433; }
+    .hero-cta:hover { background: #5a2433; transform: translateY(-1px); }
 
     .btn-detail {
       display: inline-flex; align-items: center; gap: 8px;
@@ -191,7 +211,7 @@
     /* ════════════════════════════════════════════
        FEATURE DETAIL
     ════════════════════════════════════════════ */
-    .feat-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; max-width: 1160px; margin: 0 auto; }
+    .feat-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
     .feat-detail.rev { direction: rtl; }
     .feat-detail.rev > * { direction: ltr; }
     .fd-content { display: flex; flex-direction: column; gap: 22px; }
@@ -204,7 +224,7 @@
     .fd-title {
       font-family: 'Lora', Georgia, serif;
       font-size: clamp(1.5rem, 3vw, 2rem);
-      font-weight: 700; line-height: 1.2; letter-spacing: -.02em;
+      font-weight: 500; line-height: 1.2; letter-spacing: -.02em;
       color: var(--green);
     }
     .fd-text { color: var(--muted); font-size: .95rem; line-height: 1.8; }
@@ -269,7 +289,7 @@
     ════════════════════════════════════════════ */
     #cta {
       padding: 120px 48px; text-align: center;
-      background: var(--cream);
+      background: linear-gradient(180deg, var(--cream) 0%, rgba(27,58,42,.03) 50%, var(--cream) 100%);
     }
     .cta-in {
       max-width: 640px; margin: 0 auto;
@@ -291,8 +311,8 @@
     .foot-brand { display: flex; flex-direction: column; gap: 14px; }
     .foot-brand .foot-logo {
       font-family: 'Lora', Georgia, serif;
-      font-size: 1.4rem; font-weight: 700; color: var(--cream);
-      text-decoration: none;
+      font-size: 1.4rem; font-weight: 400; color: var(--cream);
+      text-decoration: none; letter-spacing: .08em;
     }
     .foot-brand p { color: rgba(253,251,247,.5); font-size: .84rem; line-height: 1.7; max-width: 280px; }
     .foot-badge {
@@ -412,17 +432,12 @@
         <span data-es="Todo lo que necesitás para" data-en="Everything you need to">Todo lo que necesitás para</span><br/>
         <span class="hl" data-es="conocer tu hacienda de verdad" data-en="truly know your herd">conocer tu hacienda de verdad</span>
       </h1>
+      <div class="divider--short"></div>
       <p class="page-hero-sub"
         data-es="Cada función de DAG fue diseñada para reducir el trabajo manual del productor ganadero y darte información exacta sobre tu rodeo sin tener que tocar un solo animal."
         data-en="Every DAG feature was designed to reduce manual work for the cattle producer and give you precise information about your herd without having to touch a single animal.">
         Cada función de DAG fue diseñada para reducir el trabajo manual del productor ganadero y darte información exacta sobre tu rodeo sin tener que tocar un solo animal.
       </p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="como-funciona.html" class="hero-cta" data-es="Ver cómo funciona" data-en="See how it works">Ver cómo funciona</a>
-        <a href="index.html#cta" class="btn-detail" data-es="Pedí una demo" data-en="Request a demo">Pedí una demo
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-      </div>
     </div>
   </div>
 </section>
@@ -437,12 +452,6 @@
       <div class="fd-content">
         <div>
           <span class="sec-label" data-es="Función 1 de 6" data-en="Feature 1 of 6">Función 1 de 6</span>
-        </div>
-        <div class="fd-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
         </div>
         <h2 class="fd-title" data-es="Conteo automático del rodeo" data-en="Automatic herd counting">Conteo automático del rodeo</h2>
         <p class="fd-text"
@@ -463,9 +472,72 @@
           <span class="tech-badge">Python 3.11</span>
         </div>
       </div>
-      <div class="fd-img">
-        <!-- Reemplazá con una captura real del sistema detectando animales -->
-        <img src="img/hero-drone-deteccion.svg" alt="Sistema DAG detectando y contando animales en un lote"/>
+      <div class="fd-img" style="position:relative;">
+        <img src="img/muchasvacas.jpg" alt="Vacas detectadas por el sistema DAG en un lote" loading="lazy"/>
+        <!-- Detection marcos overlay -->
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;" viewBox="0 0 1000 667" xmlns="http://www.w3.org/2000/svg">
+
+          <!-- Vaca 2 — colorada, centro (130x105 como ID:05) -->
+          <g style="animation: marco-float 6s ease-in-out infinite .8s;">
+            <rect x="400" y="300" width="130" height="105" rx="2" fill="none" stroke="rgba(253,251,247,.7)" stroke-width="2"/>
+            <path d="M400 318 L400 300 L425 300" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <path d="M505 300 L530 300 L530 318" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <path d="M400 387 L400 405 L425 405" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <path d="M505 405 L530 405 L530 387" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <rect x="400" y="300" width="130" height="20" fill="#1B3A2A" opacity=".88"/>
+            <text x="408" y="314" font-family="'Azeret Mono',monospace" font-size="10" font-weight="600" fill="#FDFBF7" letter-spacing=".04em">ID:02  412kg</text>
+            <rect x="420" y="385" width="110" height="20" fill="#1B3A2A" opacity=".88"/>
+            <text x="428" y="399" font-family="'Azeret Mono',monospace" font-size="10" font-weight="600" fill="#FDFBF7" letter-spacing=".04em">NORMAL</text>
+            <line x1="400" y1="353" x2="530" y2="353" stroke="rgba(253,251,247,.2)" stroke-width="1" stroke-dasharray="6 4">
+              <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="3s" repeatCount="indefinite"/>
+            </line>
+          </g>
+
+          <!-- Vaca 4 — negra, derecha (130x105 como ID:05) -->
+          <g style="animation: marco-float 6s ease-in-out infinite 2.4s;">
+            <rect x="720" y="320" width="130" height="105" rx="2" fill="none" stroke="rgba(253,251,247,.7)" stroke-width="2"/>
+            <path d="M720 338 L720 320 L745 320" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <path d="M825 320 L850 320 L850 338" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <path d="M720 407 L720 425 L745 425" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <path d="M825 425 L850 425 L850 407" fill="none" stroke="#FDFBF7" stroke-width="3" stroke-linecap="square"/>
+            <rect x="720" y="320" width="130" height="20" fill="#1B3A2A" opacity=".88"/>
+            <text x="728" y="334" font-family="'Azeret Mono',monospace" font-size="10" font-weight="600" fill="#FDFBF7" letter-spacing=".04em">ID:04  451kg</text>
+            <rect x="740" y="405" width="110" height="20" fill="#1B3A2A" opacity=".88"/>
+            <text x="748" y="419" font-family="'Azeret Mono',monospace" font-size="10" font-weight="600" fill="#FDFBF7" letter-spacing=".04em">NORMAL</text>
+            <line x1="720" y1="373" x2="850" y2="373" stroke="rgba(253,251,247,.2)" stroke-width="1" stroke-dasharray="6 4">
+              <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="3s" repeatCount="indefinite"/>
+            </line>
+          </g>
+
+          <!-- Vaca 5 — bajo peso (movida a la derecha y arriba) -->
+          <g style="animation: marco-float 6s ease-in-out infinite 3.2s;">
+            <rect x="120" y="300" width="130" height="105" rx="2" fill="none" stroke="rgba(107,45,60,.7)" stroke-width="2" stroke-dasharray="6 3"/>
+            <path d="M120 318 L120 300 L145 300" fill="none" stroke="#6B2D3C" stroke-width="3" stroke-linecap="square"/>
+            <path d="M225 300 L250 300 L250 318" fill="none" stroke="#6B2D3C" stroke-width="3" stroke-linecap="square"/>
+            <path d="M120 387 L120 405 L145 405" fill="none" stroke="#6B2D3C" stroke-width="3" stroke-linecap="square"/>
+            <path d="M225 405 L250 405 L250 387" fill="none" stroke="#6B2D3C" stroke-width="3" stroke-linecap="square"/>
+            <rect x="120" y="300" width="130" height="20" fill="#6B2D3C" opacity=".9"/>
+            <text x="126" y="314" font-family="'Azeret Mono',monospace" font-size="10" font-weight="600" fill="#FDFBF7" letter-spacing=".04em">ID:05 284kg ⚠</text>
+            <rect x="140" y="385" width="110" height="20" fill="#6B2D3C" opacity=".9"/>
+            <text x="148" y="399" font-family="'Azeret Mono',monospace" font-size="10" font-weight="600" fill="#FDFBF7" letter-spacing=".04em">BAJO PESO</text>
+          </g>
+
+          <!-- HUD overlay: info panel top-left -->
+          <g>
+            <rect x="20" y="20" width="230" height="110" rx="4" fill="rgba(27,58,42,.82)"/>
+            <circle cx="36" cy="38" r="5" fill="#4ade80"/>
+            <text x="46" y="42" font-family="'Azeret Mono',monospace" font-size="11" font-weight="700" fill="#FDFBF7" letter-spacing=".06em">DETECCIÓN EN VIVO</text>
+            <text x="30" y="62" font-family="'Azeret Mono',monospace" font-size="10" font-weight="500" fill="rgba(253,251,247,.8)">Cabezas: 3 | Área: 4.2 ha</text>
+            <text x="30" y="78" font-family="'Azeret Mono',monospace" font-size="10" font-weight="500" fill="rgba(253,251,247,.8)">Peso promedio: 354 kg</text>
+            <text x="30" y="94" font-family="'Azeret Mono',monospace" font-size="10" font-weight="500" fill="#f59e0b">⚠ Alertas: 1 (bajo peso)</text>
+            <text x="30" y="118" font-family="'Azeret Mono',monospace" font-size="9" font-weight="400" fill="rgba(253,251,247,.5)">Vuelo: 2024-10-15 Alt: 45m</text>
+          </g>
+
+          <!-- Frame counter bottom-right -->
+          <rect x="830" y="640" width="160" height="22" rx="2" fill="rgba(27,58,42,.6)"/>
+          <text x="840" y="656" font-family="'Azeret Mono',monospace" font-size="10" font-weight="500" fill="rgba(253,251,247,.6)">Frame 847 / 3200</text>
+
+        </svg>
       </div>
     </div>
   </div>
@@ -481,12 +553,6 @@
       <div class="fd-content">
         <div>
           <span class="sec-label" data-es="Función 2 de 6" data-en="Feature 2 of 6">Función 2 de 6</span>
-        </div>
-        <div class="fd-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="3" x2="12" y2="21"/><path d="M3 6l9-3 9 3"/>
-            <path d="M3 6c0 5-1 8-1 11h20c0-3-1-6-1-11"/><path d="M5 17H19"/>
-          </svg>
         </div>
         <h2 class="fd-title" data-es="Peso estimado sin tolva ni manga" data-en="Estimated weight — no crush, no scale">Peso estimado sin tolva ni manga</h2>
         <p class="fd-text"
@@ -508,7 +574,7 @@
       </div>
       <div class="fd-img">
         <!-- Reemplazá con foto de hacienda en lote o captura del sistema mostrando pesos -->
-        <img src="img/foto-hacienda-lote.svg" alt="Hacienda bovina en lote — estimación de peso desde dron"/>
+        <img src="img/foto-hacienda-lote.svg" alt="Hacienda bovina en lote — estimación de peso desde dron" loading="lazy"/>
       </div>
     </div>
   </div>
@@ -568,13 +634,6 @@
       </div>
     </div>
 
-    <div class="zscore-box fi">
-      <h3 data-es="¿Cómo funciona el z-score?" data-en="How does z-score work?">¿Cómo funciona el z-score?</h3>
-      <p data-es="Para cada vuelo, el sistema calcula la densidad corporal de cada animal (peso estimado dividido por el área de su silueta). Luego obtiene la media y el desvío estándar de esa distribución dentro del lote. Los animales con un z-score menor a -1.5 son marcados como BAJO PESO; los que superan +1.5 como SOBREPESO; los que tienen un área de silueta muy pequeña en términos absolutos son clasificados como TERNERO. El resto es NORMAL."
-        data-en="For each flight, the system calculates each animal's body density (estimated weight divided by silhouette area). It then gets the mean and standard deviation of that distribution within the paddock. Animals with z-score below -1.5 are flagged UNDERWEIGHT; those above +1.5 as OVERWEIGHT; those with an absolutely very small silhouette area are classified as CALF. The rest are NORMAL.">
-        Para cada vuelo, el sistema calcula la densidad corporal de cada animal (peso estimado dividido por el área de su silueta). Luego obtiene la media y el desvío estándar de esa distribución dentro del lote. Los animales con un z-score menor a -1.5 son marcados como BAJO PESO; los que superan +1.5 como SOBREPESO; los que tienen un área de silueta muy pequeña en términos absolutos son clasificados como TERNERO. El resto es NORMAL.
-      </p>
-    </div>
   </div>
 </section>
 
@@ -588,12 +647,6 @@
       <div class="fd-content">
         <div>
           <span class="sec-label" data-es="Función 4 de 6" data-en="Feature 4 of 6">Función 4 de 6</span>
-        </div>
-        <div class="fd-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6"  y1="20" x2="6"  y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
-          </svg>
         </div>
         <h2 class="fd-title" data-es="Dashboard por establecimiento" data-en="Dashboard per property">Dashboard por establecimiento</h2>
         <p class="fd-text"
@@ -615,7 +668,7 @@
       </div>
       <div class="fd-img">
         <!-- Reemplazá con screenshot real del dashboard DAG -->
-        <img src="img/captura-pantalla-app.svg" alt="Dashboard DAG — evolución de peso y condición corporal del rodeo"/>
+        <img src="img/captura-pantalla-app.svg" alt="Dashboard DAG — evolución de peso y condición corporal del rodeo" loading="lazy"/>
       </div>
     </div>
   </div>
@@ -631,13 +684,6 @@
       <div class="fd-content">
         <div>
           <span class="sec-label" data-es="Función 5 de 6" data-en="Feature 5 of 6">Función 5 de 6</span>
-        </div>
-        <div class="fd-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
         </div>
         <h2 class="fd-title" data-es="Informe PDF por vuelo" data-en="PDF report per flight">Informe PDF por vuelo</h2>
         <p class="fd-text"
@@ -661,7 +707,7 @@
       </div>
       <div class="fd-img" style="display:flex;flex-direction:column;gap:16px;">
         <!-- Reemplazá con foto o screenshot de un informe PDF real generado por DAG -->
-        <img src="img/foto-productor-tablet.svg" alt="Productor ganadero revisando el informe PDF de DAG en su tablet"/>
+        <img src="img/foto-productor-tablet.svg" alt="Productor ganadero revisando el informe PDF de DAG en su tablet" loading="lazy"/>
       </div>
     </div>
   </div>
@@ -678,12 +724,6 @@
         <div>
           <span class="sec-label" data-es="Función 6 de 6" data-en="Feature 6 of 6">Función 6 de 6</span>
         </div>
-        <div class="fd-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </div>
         <h2 class="fd-title" data-es="Alertas configurables por lote" data-en="Configurable alerts per paddock">Alertas configurables por lote</h2>
         <p class="fd-text"
           data-es="Definís un peso mínimo (y opcionalmente máximo) de referencia para cada lote de tu establecimiento. Cada vez que llega un vuelo procesado, el sistema lo evalúa automáticamente contra esos umbrales y te notifica si algún animal o el promedio del lote sale de los parámetros que vos configuraste."
@@ -698,7 +738,7 @@
         </ul>
       </div>
       <div class="fd-img">
-        <img src="img/foto-productor-tablet.svg" alt="Productor recibiendo alertas de DAG sobre su hacienda"/>
+        <img src="img/foto-productor-tablet.svg" alt="Productor recibiendo alertas de DAG sobre su hacienda" loading="lazy"/>
       </div>
     </div>
   </div>
@@ -804,7 +844,7 @@
         <ul>
           <li><a href="https://fi.uba.ar" target="_blank">FIUBA</a></li>
           <li><a href="mailto:dag@fi.uba.ar" data-es="Contacto" data-en="Contact">Contacto</a></li>
-          <li><a href="https://github.com" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/fiuba-dag" target="_blank">GitHub</a></li>
         </ul>
       </div>
     </div>
@@ -823,13 +863,14 @@
     document.getElementById('btnES').classList.toggle('on', l === 'es');
     document.getElementById('btnEN').classList.toggle('on', l === 'en');
     document.documentElement.lang = l;
-    document.querySelectorAll('[data-es]').forEach(el => {
+    i18nEls.forEach(el => {
       const t = el.getAttribute('data-' + l);
       if (t) el.textContent = t;
     });
   }
   const nav = document.getElementById('nav');
-  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36));
+  const i18nEls = document.querySelectorAll('[data-es]');
+  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36), { passive: true });
   function openMob()  { document.getElementById('mobMenu').classList.add('open'); }
   function closeMob() { document.getElementById('mobMenu').classList.remove('open'); }
   const io = new IntersectionObserver((entries) => {

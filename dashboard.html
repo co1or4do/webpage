@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — DAG Detección Activa de Ganado</title>
   <meta name="description" content="El dashboard de DAG centraliza conteos, pesos estimados, condición corporal, historial de vuelos y alertas de tu hacienda en un solo lugar." />
+  <link rel="icon" type="image/svg+xml" href="img/LOGO.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,6 +33,15 @@
       line-height: 1.7;
       overflow-x: hidden;
     }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: none;
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
 
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--cream); }
@@ -45,6 +55,7 @@
 
     /* ── DIVIDER ── */
     .divider { width: 100%; height: 1px; background: var(--border); }
+    .divider--short { width: 100%; max-width: 360px; height: 1px; background: var(--border); }
 
     /* ── UTILITIES ── */
     .hl { color: var(--bordo); }
@@ -70,18 +81,18 @@
       background: var(--bordo); color: var(--cream);
       padding: 14px 32px; font-size: .92rem;
       font-family: 'Lora', Georgia, serif; font-weight: 600;
-      border: none; border-radius: 4px; text-decoration: none;
-      cursor: pointer; transition: background .2s;
+      border: none; border-radius: 0; text-decoration: none;
+      cursor: pointer; transition: background .2s, transform .2s;
       width: fit-content;
     }
-    .hero-cta:hover { background: #5a2433; }
+    .hero-cta:hover { background: #5a2433; transform: translateY(-1px); }
 
     .btn-secondary {
       display: inline-flex; align-items: center; gap: 8px;
       background: transparent; color: var(--green);
       padding: 14px 32px; font-size: .92rem;
       font-family: 'Lora', Georgia, serif; font-weight: 600;
-      border: 1px solid var(--green); border-radius: 4px; text-decoration: none;
+      border: 1px solid var(--green); border-radius: 0; text-decoration: none;
       cursor: pointer; transition: all .2s;
       width: fit-content;
     }
@@ -114,14 +125,23 @@
       height: 1.8rem; width: auto;
     }
 
-    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; }
+    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; margin-left: auto; margin-right: 24px; }
     .nav-links a {
       color: var(--muted); text-decoration: none; font-size: .86rem;
       font-weight: 500; padding: 6px 16px;
       transition: color .2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: 0; left: 16px; right: 16px;
+      height: 1px; background: var(--green);
+      transform: scaleX(0); transform-origin: right;
+      transition: transform .3s ease;
     }
     .nav-links a:hover { color: var(--green); }
-    .nav-links a.active { color: var(--green); font-weight: 600; }
+    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
+    .nav-links a.active { color: var(--green); }
+    .nav-links a.active::after { transform: scaleX(1); }
 
     .nav-right { display: flex; align-items: center; gap: 14px; }
     .lang-toggle {
@@ -176,7 +196,7 @@
     .page-hero-title {
       font-family: 'Lora', Georgia, serif;
       font-size: clamp(2.2rem,4.5vw,3.4rem);
-      font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
+      font-weight: 400; line-height: 1.1; letter-spacing: -.02em;
       color: var(--green);
     }
     .page-hero-sub {
@@ -232,7 +252,7 @@
     .fp-title {
       font-family: 'Lora', Georgia, serif;
       font-size: clamp(1.3rem,2.6vw,1.75rem);
-      font-weight: 700; line-height: 1.2; color: var(--green);
+      font-weight: 500; line-height: 1.2; color: var(--green);
     }
     .fp-sub { color: var(--muted); font-size: .95rem; line-height: 1.8; }
     .fp-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; }
@@ -276,11 +296,20 @@
       font-size: .85rem; color: var(--muted); display: flex; gap: 10px;
     }
     .access-list li .check { color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .access-icon {
+      width: 52px; height: 52px; border-radius: 6px;
+      background: rgba(27,58,42,.05); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green); margin-bottom: 18px;
+    }
 
     /* ════════════════════════════════════════════
        CTA
     ════════════════════════════════════════════ */
-    #cta { padding: 120px 48px; text-align: center; }
+    #cta {
+      padding: 120px 48px; text-align: center;
+      background: linear-gradient(180deg, var(--cream) 0%, rgba(27,58,42,.03) 50%, var(--cream) 100%);
+    }
     .cta-in {
       max-width: 640px; margin: 0 auto;
       display: flex; flex-direction: column; align-items: center; gap: 22px;
@@ -295,8 +324,8 @@
     .foot-brand { display: flex; flex-direction: column; gap: 14px; }
     .foot-brand .foot-logo {
       font-family: 'Lora', Georgia, serif;
-      font-size: 1.4rem; font-weight: 700; color: var(--cream);
-      text-decoration: none;
+      font-size: 1.4rem; font-weight: 400; color: var(--cream);
+      text-decoration: none; letter-spacing: .08em;
     }
     .foot-brand p { color: rgba(253,251,247,.5); font-size: .84rem; line-height: 1.7; max-width: 280px; }
     .foot-badge {
@@ -360,10 +389,10 @@
 <!-- ══ MOBILE MENU ══ -->
 <div class="mob-menu" id="mobMenu">
   <button class="close-btn" onclick="closeMob()">&#10005;</button>
-  <a href="index.html" onclick="closeMob()">Inicio</a>
-  <a href="caracteristicas.html" onclick="closeMob()">Características</a>
-  <a href="como-funciona.html" onclick="closeMob()">Cómo funciona</a>
-  <a href="dashboard.html" onclick="closeMob()">Dashboard</a>
+  <a href="index.html" onclick="closeMob()" data-es="Inicio" data-en="Home">Inicio</a>
+  <a href="caracteristicas.html" onclick="closeMob()" data-es="Características" data-en="Features">Características</a>
+  <a href="como-funciona.html" onclick="closeMob()" data-es="Cómo funciona" data-en="How it works">Cómo funciona</a>
+  <a href="dashboard.html" onclick="closeMob()" data-es="Dashboard" data-en="Dashboard">Dashboard</a>
   <a href="index.html#cta" onclick="closeMob()" class="hero-cta"
     data-es="Pedí una demo" data-en="Request a demo">Pedí una demo</a>
 </div>
@@ -404,6 +433,7 @@
       <span data-es="Todo el campo," data-en="Your whole property,">Todo el campo,</span><br/>
       <span class="hl" data-es="en una sola pantalla" data-en="in a single screen">en una sola pantalla</span>
     </h1>
+    <div class="divider--short"></div>
     <p class="page-hero-sub"
       data-es="El dashboard DAG reúne todos los datos de tus vuelos en un solo lugar. Chequeás el estado de cada lote, comparás con vuelos anteriores y descargás informes sin necesidad de abrir una planilla."
       data-en="The DAG dashboard brings all your flight data together in one place. Check the state of each paddock, compare with previous flights, and download reports without opening a spreadsheet.">
@@ -470,7 +500,7 @@
     </div>
     <div class="fp-img">
       <!-- Reemplazá con screenshot real de los KPI cards del dashboard -->
-      <img src="img/captura-pantalla-app.svg" alt="Panel de métricas clave del dashboard DAG"/>
+      <img src="img/captura-pantalla-app.svg" alt="Panel de métricas clave del dashboard DAG" loading="lazy"/>
     </div>
   </div>
 
@@ -492,7 +522,7 @@
     </div>
     <div class="fp-img">
       <!-- Reemplazá con screenshot del gráfico de evolución de peso -->
-      <img src="img/captura-pantalla-app.svg" alt="Gráfico de evolución de peso mensual del rodeo en el dashboard DAG"/>
+      <img src="img/captura-pantalla-app.svg" alt="Gráfico de evolución de peso mensual del rodeo en el dashboard DAG" loading="lazy"/>
     </div>
   </div>
 
@@ -514,7 +544,7 @@
     </div>
     <div class="fp-img">
       <!-- Reemplazá con screenshot del módulo de condición corporal -->
-      <img src="img/captura-pantalla-app.svg" alt="Módulo de condición corporal del dashboard DAG"/>
+      <img src="img/captura-pantalla-app.svg" alt="Módulo de condición corporal del dashboard DAG" loading="lazy"/>
     </div>
   </div>
 
@@ -536,7 +566,7 @@
     </div>
     <div class="fp-img">
       <!-- Reemplazá con screenshot del mapa de lotes -->
-      <img src="img/foto-campo-aereo.svg" alt="Mapa del establecimiento con lotes delineados en DAG"/>
+      <img src="img/foto-campo-aereo.svg" alt="Mapa del establecimiento con lotes delineados en DAG" loading="lazy"/>
     </div>
   </div>
 
@@ -558,7 +588,7 @@
     </div>
     <div class="fp-img">
       <!-- Reemplazá con screenshot del listado de vuelos históricos -->
-      <img src="img/captura-pantalla-app.svg" alt="Historial de vuelos del establecimiento en DAG"/>
+      <img src="img/captura-pantalla-app.svg" alt="Historial de vuelos del establecimiento en DAG" loading="lazy"/>
     </div>
   </div>
 </section>
@@ -579,19 +609,19 @@
   </div>
   <div class="fi" style="max-width:780px;">
     <div class="alert-type crit">
-      <h4 data-es="🔴 Alerta crítica — Bajo peso masivo" data-en="🔴 Critical alert — Mass underweight">🔴 Alerta crítica — Bajo peso masivo</h4>
+      <h4 data-es="Alerta crítica — Bajo peso masivo" data-en="Critical alert — Mass underweight">Alerta crítica — Bajo peso masivo</h4>
       <p data-es="Se activa cuando más del 10% de los animales del lote fue clasificado como BAJO PESO en el último vuelo. Indica posible deficiencia nutricional o sanitaria que requiere intervención inmediata." data-en="Triggered when more than 10% of the paddock's animals were classified as UNDERWEIGHT in the last flight. Indicates possible nutritional or health deficiency requiring immediate intervention.">Se activa cuando &gt;10% de los animales del lote fue clasificado como BAJO PESO. Posible deficiencia nutricional o sanitaria.</p>
     </div>
     <div class="alert-type warn">
-      <h4 data-es="🟡 Alerta de atención — Pérdida de peso individual" data-en="🟡 Attention alert — Individual weight loss">🟡 Alerta de atención — Pérdida de peso individual</h4>
+      <h4 data-es="Alerta de atención — Pérdida de peso individual" data-en="Attention alert — Individual weight loss">Alerta de atención — Pérdida de peso individual</h4>
       <p data-es="Se activa cuando un animal individual perdió más del umbral de peso configurado entre dos vuelos consecutivos del mismo lote. El animal queda identificado con su ID en el video anotado." data-en="Triggered when an individual animal lost more than the configured weight threshold between two consecutive flights of the same paddock. The animal is identified by its ID in the annotated video.">Animal individual que perdió más del umbral configurado entre dos vuelos. Queda identificado con su ID.</p>
     </div>
     <div class="alert-type">
-      <h4 data-es="🔵 Información — Cambio de conteo significativo" data-en="🔵 Info — Significant count change">🔵 Información — Cambio de conteo significativo</h4>
+      <h4 data-es="Información — Cambio de conteo significativo" data-en="Info — Significant count change">Información — Cambio de conteo significativo</h4>
       <p data-es="Se activa cuando el conteo del último vuelo difiere en más del 5% respecto al vuelo anterior del mismo lote. Puede indicar movimiento de tropas, fallas de detección o un error de vuelo." data-en="Triggered when the last flight count differs by more than 5% from the previous flight of the same paddock. May indicate herd movement, detection failure, or flight error.">El conteo difiere &gt;5% respecto al vuelo anterior. Puede indicar movimiento de tropas o falla de detección.</p>
     </div>
     <div class="alert-type">
-      <h4 data-es="🔵 Información — Lote sin vuelo reciente" data-en="🔵 Info — Paddock without recent flight">🔵 Información — Lote sin vuelo reciente</h4>
+      <h4 data-es="Información — Lote sin vuelo reciente" data-en="Info — Paddock without recent flight">Información — Lote sin vuelo reciente</h4>
       <p data-es="Recordatorio automático cuando un lote lleva más de 30 días sin ser relevado, para que no pierdas la continuidad del historial." data-en="Automatic reminder when a paddock hasn't been surveyed for more than 30 days, so you don't lose history continuity.">Recordatorio automático cuando un lote lleva más de 30 días sin relevamiento.</p>
     </div>
   </div>
@@ -614,7 +644,9 @@
   </div>
   <div class="access-grid fi">
     <div class="access-card">
-      <div style="font-size:2.2rem;margin-bottom:16px;">🖥️</div>
+      <div class="access-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
       <h3 data-es="App de escritorio" data-en="Desktop app">App de escritorio</h3>
       <p data-es="Disponible para Windows, macOS y Linux. La app de escritorio es la forma recomendada para subir videos y revisar resultados cuando estás en la oficina o en la casa del establecimiento. Funciona sin conexión continua: podés navegar historial en modo offline."
         data-en="Available for Windows, macOS, and Linux. The desktop app is the recommended way to upload videos and review results when you're in the office or at the property house. Works without continuous connection: you can browse history in offline mode.">
@@ -628,7 +660,9 @@
       </ul>
     </div>
     <div class="access-card">
-      <div style="font-size:2.2rem;margin-bottom:16px;">🌐</div>
+      <div class="access-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </div>
       <h3 data-es="Versión web" data-en="Web version">Versión web</h3>
       <p data-es="Usable desde cualquier equipo con navegador moderno (Chrome, Firefox, Edge, Safari). La versión web es ideal para consultas rápidas desde el celular en el campo, o para compartir el acceso con el veterinario o el peón de confianza sin instalar nada."
         data-en="Usable from any device with a modern browser (Chrome, Firefox, Edge, Safari). The web version is ideal for quick queries from your phone in the field, or to share access with the vet or trusted farmhand without installing anything.">
@@ -689,7 +723,13 @@
         <ul>
           <li><a href="https://fi.uba.ar" target="_blank">FIUBA</a></li>
           <li><a href="mailto:dag@fi.uba.ar" data-es="Contacto" data-en="Contact">Contacto</a></li>
-          <li><a href="https://github.com" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/fiuba-dag" target="_blank">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5 data-es="Contacto" data-en="Contact">Contacto</h5>
+        <ul>
+          <li><a href="mailto:dag@fi.uba.ar">dag@fi.uba.ar</a></li>
         </ul>
       </div>
     </div>
@@ -708,10 +748,11 @@
     document.getElementById('btnES').classList.toggle('on', l === 'es');
     document.getElementById('btnEN').classList.toggle('on', l === 'en');
     document.documentElement.lang = l;
-    document.querySelectorAll('[data-es]').forEach(el => { const t = el.getAttribute('data-' + l); if (t) el.textContent = t; });
+    i18nEls.forEach(el => { const t = el.getAttribute('data-' + l); if (t) el.textContent = t; });
   }
   const nav = document.getElementById('nav');
-  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36));
+  const i18nEls = document.querySelectorAll('[data-es]');
+  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36), { passive: true });
   function openMob()  { document.getElementById('mobMenu').classList.add('open'); }
   function closeMob() { document.getElementById('mobMenu').classList.remove('open'); }
   const io = new IntersectionObserver((entries) => {

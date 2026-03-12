@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DAG — Detección Activa de Ganado</title>
   <meta name="description" content="Sobrevolá tus lotes con un dron y obtené conteo, peso y condición corporal de cada animal. Sin arrear, sin manga, sin errores." />
+  <link rel="icon" type="image/svg+xml" href="img/LOGO.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -870,7 +871,7 @@
     document.getElementById('btnES').classList.toggle('on', l === 'es');
     document.getElementById('btnEN').classList.toggle('on', l === 'en');
     document.documentElement.lang = l;
-    document.querySelectorAll('[data-es]').forEach(el => {
+    i18nEls.forEach(el => {
       const t = el.getAttribute('data-' + l);
       if (t) el.textContent = t;
     });
@@ -880,7 +881,8 @@
   }
 
   const nav = document.getElementById('nav');
-  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36));
+  const i18nEls = document.querySelectorAll('[data-es]');
+  window.addEventListener('scroll', () => nav.classList.toggle('sc', scrollY > 36), { passive: true });
 
   function openMob()  { document.getElementById('mobMenu').classList.add('open'); }
   function closeMob() { document.getElementById('mobMenu').classList.remove('open'); }
